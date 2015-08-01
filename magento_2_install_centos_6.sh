@@ -1,8 +1,28 @@
 #!/bin/bash
 #
-# Created by algostore.com 2015
-# You can use it for free under gnu gpl v2
+## Automatic Magento2 beta with sample data original install on CentOS 6.x
 #
+# Written by algostore.com (http://www.algostore.com)
+#
+#
+# PURPOSE: This Bash script can be used to take automatic install of your Magento2 beta. Script process:
+# - PHP version check
+# - MySQL version check
+# - presense of composer, if absent - script install it
+# - presense of git, if absent - script install it
+# - git clone magento2.git
+# - change permissions on cloned project
+# - change apache user shell & pass
+# - configure composer access to github.com if TOKEN provided
+# - install & configure Magento2 project with composer using sample data
+# - sets always_populate_raw_post_data = -1 in php.ini if PHP version >= 5.6.0
+# - nginx.conf.sample configuring for php-fpm+nginx (this part of script could be cutted if it does not needed) 
+#
+# DISCLAIMER: Make sure that you undestand how the script works. No responsibility accepted in event of accidental data loss.
+#
+# You can use it for free under gnu gpl v2
+# v1.1  2015
+
 TOKEN= #40 symbols, It will be stored in "/var/www/.composer/auth.json" for future use by Composer. If you run script first time - leave it empty.
 dbname=magento2       #magento database name will be created
 dbuser=magento2       #magento database user will be created
@@ -21,7 +41,7 @@ ADMIN_PASSWORD=123456   #required
 LANG=en_US            #required
 CURRENCY=EUR          #required
 TZ=Europe/Amsterdam   #required
-MSDV=0.74.0-beta9     #magento sample data version http://packages.magento.com/#magento/sample-data
+MSDV=1.0.0-beta       #magento sample data version http://packages.magento.com/#magento/sample-data
 
 function php_version_compare() { test "$(echo "$@" | tr " " "\n" | sort -V | tail -n 1)" == "$1"; }
 installed_php_ver=`php -v |grep -Eow '^PHP [^ ]+' |gawk '{ print $2 }'`
@@ -90,12 +110,12 @@ P3="FLUSH PRIVILEGES;"
 SQL="${P1}${P2}${P3}"
 $MYSQL -uroot -p$dbrootpass -e "$SQL"
 
-su - apache -c "cd $basepath$baseurl &&   php bin/magento setup:install --base_url=http://$baseurl/ \
---backend_frontname=admin --db_host=localhost --db_name=$dbname \
---db_user=$dbuser --db_password=$dbpass \
---admin_firstname=$FIRSTNAME --admin_lastname=$LASTNAME --admin_email=$ADMIN_EMAIL \
---admin_user=$ADMIN_USER --admin_password=$ADMIN_PASSWORD --language=$LANG \
---currency=$CURRENCY --timezone=$TZ --use_sample_data"
+su - apache -c "cd $basepath$baseurl &&   php bin/magento setup:install --base-url=http://$baseurl/ \
+--backend-frontname=admin --db-host=localhost --db-name=$dbname \
+--db-user=$dbuser --db-password=$dbpass \
+--admin-firstname=$FIRSTNAME --admin-lastname=$LASTNAME --admin-email=$ADMIN_EMAIL \
+--admin-user=$ADMIN_USER --admin-password=$ADMIN_PASSWORD --language=$LANG \
+--currency=$CURRENCY --timezone=$TZ --use-sample-data"
 echo "changing permissions $basepath$baseurl/app/etc "
 chmod 500 $basepath$baseurl/app/etc #For security, remove write permissions from these directories
 
